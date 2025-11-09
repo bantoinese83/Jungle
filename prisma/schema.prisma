@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id             String       @id @default(uuid())
+  email          String       @unique
+  supabaseUserId String       @unique @map("supabase_user_id")
+  organizationId String       @map("organization_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  organization Organization @relation("OrganizationUsers", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("users")
+}
+
+model Organization {
+  id                String        @id @default(uuid())
+  name              String
+  subscriptionStatus String?      @default("trial") @map("subscription_status")
+  planId            String?       @map("plan_id")
+  stripeCustomerId String?       @unique @map("stripe_customer_id")
+  speedToLeadMinutes Int          @default(5) @map("speed_to_lead_minutes")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  users       User[]        @relation("OrganizationUsers")
+  leads       Lead[]
+  integrations Integration[]
+
+  @@map("organizations")
+}
+
+model Lead {
+  id                String    @id @default(uuid())
+  organizationId    String    @map("organization_id")
+  crmId             String?   @map("crm_id")
+  name              String
+  phone             String
+  email             String?
+  status            String    @default("pending") // 'pending', 'called_by_human', 'ai_triggered'
+  receivedAt        DateTime  @default(now()) @map("received_at")
+  firstCallAt       DateTime? @map("first_call_at")
+  aiCallTriggeredAt DateTime? @map("ai_call_triggered_at")
+  speedToLeadMinutes Int?     @map("speed_to_lead_minutes")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([receivedAt])
+  @@map("leads")
+}
+
+model Integration {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  type           String   // 'gohighlevel', 'retell_ai', 'close', etc.
+  encryptedKey   String   @map("encrypted_key")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, type])
+  @@index([organizationId])
+  @@map("integrations")
+}

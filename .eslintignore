@@ -1,0 +1,10 @@
+node_modules
+.next
+supabase
+marketing/scripts/*.js
+*.config.js
+*.config.mjs
+tests/**/*.ts
+tests/**/*.tsx
+vitest.config.ts
+

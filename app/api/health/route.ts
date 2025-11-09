@@ -1,0 +1,37 @@
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+
+/**
+ * Health check endpoint for monitoring and load balancers
+ * Returns 200 if application is healthy, 503 if unhealthy
+ */
+export async function GET() {
+  try {
+    // Check database connectivity
+    await prisma.$queryRaw`SELECT 1`
+
+    return NextResponse.json(
+      {
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        checks: {
+          database: 'ok',
+        },
+      },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error('Health check failed:', error)
+    return NextResponse.json(
+      {
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        checks: {
+          database: 'failed',
+        },
+      },
+      { status: 503 }
+    )
+  }
+}
+

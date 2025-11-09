@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/billing-reconciliation",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}
+
